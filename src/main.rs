@@ -53,6 +53,28 @@ fn format_eta(eta: i64) -> String {
     format!("{}d", eta / (3600 * 24))
 }
 
+fn format_state(state: &str) -> &str {
+    match state {
+        "downloading" => "Downloading",
+        "forcedDL" => "Downloading",
+        "stoppedUP" => "Stopped",
+        "stoppedDL" => "Stopped",
+        "uploading" => "Seeding",
+        "forcedUP" => "Seeding",
+        "stalledDL" => "Stalled",
+        "stalledUP" => "Stalled",
+        "queuedDL" => "Queued",
+        "queuedUP" => "Queued",
+        "checkingDL" => "Checking",
+        "checkingUP" => "Checking",
+        "checkingResumeData" => "Checking",
+        "metaDL" => "Fetching metadata",
+        "missingFiles" => "Missing files",
+        "error" => "Error",
+        _ => state,
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let home = std::env::var("HOME").context("HOME is not set")?;
@@ -99,7 +121,7 @@ async fn main() -> Result<()> {
             format_progress(torrent.progress),
             format_speed(torrent.dlspeed),
             format_eta(torrent.eta),
-            torrent.state
+            format_state(&torrent.state)
         );
     }
     Ok(())
@@ -189,5 +211,57 @@ mod tests {
     #[test]
     fn formats_eta_as_days() {
         assert_eq!(format_eta(86400), "1d");
+    }
+
+    #[test]
+    fn formats_downloading_state() {
+        assert_eq!(format_state("downloading"), "Downloading");
+        assert_eq!(format_state("forcedDL"), "Downloading");
+    }
+
+    #[test]
+    fn formats_stopped_states() {
+        assert_eq!(format_state("stoppedUP"), "Stopped");
+        assert_eq!(format_state("stoppedDL"), "Stopped");
+    }
+
+    #[test]
+    fn formats_seeding_states() {
+        assert_eq!(format_state("uploading"), "Seeding");
+        assert_eq!(format_state("forcedUP"), "Seeding");
+    }
+
+    #[test]
+    fn formats_stalled_states() {
+        assert_eq!(format_state("stalledDL"), "Stalled");
+        assert_eq!(format_state("stalledUP"), "Stalled");
+    }
+
+    #[test]
+    fn formats_queued_states() {
+        assert_eq!(format_state("queuedDL"), "Queued");
+        assert_eq!(format_state("queuedUP"), "Queued");
+    }
+
+    #[test]
+    fn formats_cheking_states() {
+        assert_eq!(format_state("checkingDL"), "Checking");
+        assert_eq!(format_state("checkingUP"), "Checking");
+        assert_eq!(format_state("checkingResumeData"), "Checking");
+    }
+
+    #[test]
+    fn formats_fetching_metadata_states() {
+        assert_eq!(format_state("metaDL"), "Fetching metadata");
+    }
+
+    #[test]
+    fn formats_missing_files_states() {
+        assert_eq!(format_state("missingFiles"), "Missing files");
+    }
+
+    #[test]
+    fn formats_error_states() {
+        assert_eq!(format_state("error"), "Error");
     }
 }
