@@ -37,6 +37,22 @@ fn format_speed(speed: u64) -> String {
     format!("{:.1} MiB/s", speed as f64 / (1024.0 * 1024.0))
 }
 
+fn format_eta(eta: i64) -> String {
+    if eta >= 8640000 {
+        return "∞".to_string();
+    }
+    if eta < 60 {
+        return format!("{}s", eta);
+    }
+    if eta < 3600 {
+        return format!("{}m", eta / 60);
+    }
+    if eta < 3600 * 24 {
+        return format!("{}h", eta / 3600);
+    }
+    format!("{}d", eta / (3600 * 24))
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let home = std::env::var("HOME").context("HOME is not set")?;
@@ -82,7 +98,7 @@ async fn main() -> Result<()> {
             torrent.hash,
             format_progress(torrent.progress),
             format_speed(torrent.dlspeed),
-            torrent.eta,
+            format_eta(torrent.eta),
             torrent.state
         );
     }
@@ -148,5 +164,30 @@ mod tests {
     #[test]
     fn formats_speed_in_mib() {
         assert_eq!(format_speed(1048576), "1.0 MiB/s");
+    }
+
+    #[test]
+    fn formats_unknown_eta_as_infinity() {
+        assert_eq!(format_eta(8640000), "∞");
+    }
+
+    #[test]
+    fn formats_eta_as_seconds() {
+        assert_eq!(format_eta(45), "45s");
+    }
+
+    #[test]
+    fn formats_eta_as_minutes() {
+        assert_eq!(format_eta(360), "6m");
+    }
+
+    #[test]
+    fn formats_eta_as_hours() {
+        assert_eq!(format_eta(7200), "2h");
+    }
+
+    #[test]
+    fn formats_eta_as_days() {
+        assert_eq!(format_eta(86400), "1d");
     }
 }
