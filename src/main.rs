@@ -27,6 +27,16 @@ fn format_progress(progress: f64) -> String {
     format!("{:.0}%", progress * 100.0)
 }
 
+fn format_speed(speed: u64) -> String {
+    if speed < 1024 {
+        return format!("{} B/s", speed);
+    }
+    if speed < 1024 * 1024 {
+        return format!("{:.1} KiB/s", speed as f64 / 1024.0);
+    }
+    format!("{:.1} MiB/s", speed as f64 / (1024.0 * 1024.0))
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let home = std::env::var("HOME").context("HOME is not set")?;
@@ -71,7 +81,7 @@ async fn main() -> Result<()> {
             torrent.name,
             torrent.hash,
             format_progress(torrent.progress),
-            torrent.dlspeed,
+            format_speed(torrent.dlspeed),
             torrent.eta,
             torrent.state
         );
@@ -123,5 +133,20 @@ mod tests {
     #[test]
     fn rounds_progress_to_whole_percent() {
         assert_eq!(format_progress(0.29), "29%");
+    }
+
+    #[test]
+    fn formats_speed_below_1024_as_bytes() {
+        assert_eq!(format_speed(500), "500 B/s");
+    }
+
+    #[test]
+    fn formats_speed_in_kib() {
+        assert_eq!(format_speed(2048), "2.0 KiB/s");
+    }
+
+    #[test]
+    fn formats_speed_in_mib() {
+        assert_eq!(format_speed(1048576), "1.0 MiB/s");
     }
 }
