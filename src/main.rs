@@ -1,4 +1,5 @@
 use anyhow::{Context, Result, bail};
+use clap::{Parser, Subcommand};
 use serde::Deserialize;
 use std::os::unix::fs::PermissionsExt;
 
@@ -17,6 +18,18 @@ struct Torrent {
     dlspeed: u64,
     eta: i64,
     state: String,
+}
+
+#[derive(Parser)]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Subcommand)]
+enum Command {
+    /// List all torrents
+    List,
 }
 
 fn is_private(mode: u32) -> bool {
@@ -70,6 +83,14 @@ fn format_state(state: &str) -> &str {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let cli = Cli::parse();
+
+    match cli.command {
+        Command::List => list().await,
+    }
+}
+
+async fn list() -> Result<()> {
     let home = std::env::var("HOME").context("HOME is not set")?;
     let path = format!("{}/.config/tick/config.toml", home);
     let mode = std::fs::metadata(&path)
