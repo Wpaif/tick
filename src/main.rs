@@ -1,16 +1,24 @@
 use anyhow::{Result, bail};
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct Config {
+    url: String,
+    username: String,
+    password: String,
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let base: &str = "http://127.0.0.1:8080";
-    let user = std::env::var("TICK_USER")?;
-    let pass = std::env::var("TICK_PASS")?;
+    let text = std::fs::read_to_string("/home/wilian/.config/tick/config.toml")?;
+
+    let cfg: Config = toml::from_str(&text)?;
 
     let client = reqwest::Client::builder().cookie_store(true).build()?;
 
     let response = client
-        .post(format!("{base}/api/v2/auth/login"))
-        .form(&[("username", user.as_str()), ("password", pass.as_str())])
+        .post(format!("{}/api/v2/auth/login", cfg.url))
+        .form(&[("username", cfg.username), ("password", cfg.password)])
         .send()
         .await?;
 
@@ -19,7 +27,7 @@ async fn main() -> Result<()> {
     }
 
     let version = client
-        .get(format!("{base}/api/v2/app/webapiVersion"))
+        .get(format!("{}/api/v2/app/webapiVersion", cfg.url))
         .send()
         .await?
         .text()
