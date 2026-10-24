@@ -22,7 +22,7 @@ messages, one per line. The UI never talks to qBittorrent directly.
 - [x] Install `qbittorrent-nox` and create the `systemd --user` service
 - [x] Bind the Web UI to `127.0.0.1` only, with username and password
 - [x] Crates: `tokio`, `reqwest` (with cookies), `serde`/`serde_json`, `anyhow`, `clap`
-- [ ] Config file at `~/.config/tick/config.toml` (URL, username; password outside the file or with mode 600)
+- [x] Config file at `~/.config/tick/config.toml` (URL, username; password outside the file or with mode 600)
 
 ## Phase 1 — Basics (MVP)
 - [ ] API client: `auth/login`, `torrents/info`, `torrents/add`, pause/resume (`stop`/`start` on API 5.x), `delete`
