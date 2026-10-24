@@ -1,5 +1,6 @@
-use anyhow::{Result, bail};
+use anyhow::{Context, Result, bail};
 use serde::Deserialize;
+use std::os::unix::fs::PermissionsExt;
 
 #[derive(Deserialize)]
 struct Config {
@@ -8,11 +9,24 @@ struct Config {
     password: String,
 }
 
+fn is_private(mode: u32) -> bool {
+    mode & 0o077 == 0
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
-    let text = std::fs::read_to_string("/home/wilian/.config/tick/config.toml")?;
+    let home = std::env::var("HOME").context("HOME is not set")?;
+    let path = format!("{}/.config/tick/config.toml", home);
+    let text = std::fs::read_to_string(&path).with_context(|| format!("failed to read {path}"))?;
+    let mode = std::fs::metadata(&path)
+        .with_context(|| format!("failet to read {path}"))?
+        .permissions()
+        .mode();
 
-    let cfg: Config = toml::from_str(&text)?;
+    if !is_private(mode) {
+        bail!("{path} must not be readable by other user (run: chmod 600 {path})");
+    }
+    let cfg: Config = toml::from_str(&text).with_context(|| format!("failed to parse {path}"))?;
 
     let client = reqwest::Client::builder().cookie_store(true).build()?;
 
@@ -35,4 +49,19 @@ async fn main() -> Result<()> {
 
     println!("qBittorrent API: {version}");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn accepts_mode_600() {
+        assert!(is_private(0o600));
+    }
+
+    #[test]
+    fn rejects_mode_644() {
+        assert!(!is_private(0o644));
+    }
 }
