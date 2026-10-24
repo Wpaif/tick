@@ -6,10 +6,10 @@ The engine is `qbittorrent-nox`; tick only shows and controls what it does.
 ## Architecture
 
 ```
-┌──────────────────────┐  line-delimited JSON  ┌──────────────────┐  HTTP (Web API v2)  ┌─────────────────┐
-│ UI  (QML/Quickshell) │ ◄──── stdin/stdout ──► │ tick --backend   │ ◄────────────────► │ qbittorrent-nox │
-│ ui/*.qml             │                        │ (Rust)           │   localhost:8080    │ (systemd --user)│
-└──────────────────────┘                        └──────────────────┘                     └─────────────────┘
+┌──────────────────────┐  line-delimited JSON   ┌──────────────────┐  HTTP (Web API v2)  ┌───────────────────┐
+│ UI  (QML/Quickshell) │ ◄──── stdin/stdout ──► │ tick --backend   │ ◄────────────────►  │ qbittorrent-nox   │
+│ ui/*.qml             │                        │ (Rust)           │   localhost:8080    │ (systemd --user)  │
+└──────────────────────┘                        └──────────────────┘                     └───────────────────┘
 ```
 
 Same design as flea: the QML UI starts `tick --backend` and talks to it through JSON
