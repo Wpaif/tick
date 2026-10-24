@@ -91,31 +91,8 @@ async fn main() -> Result<()> {
 }
 
 async fn list() -> Result<()> {
-    let home = std::env::var("HOME").context("HOME is not set")?;
-    let path = format!("{}/.config/tick/config.toml", home);
-    let mode = std::fs::metadata(&path)
-        .with_context(|| format!("failed to read {path}"))?
-        .permissions()
-        .mode();
-
-    if !is_private(mode) {
-        bail!("{path} must not be readable by other users (run: chmod 600 {path})");
-    }
-    let text = std::fs::read_to_string(&path).with_context(|| format!("failed to read {path}"))?;
-
-    let cfg: Config = toml::from_str(&text).with_context(|| format!("failed to parse {path}"))?;
-
-    let client = reqwest::Client::builder().cookie_store(true).build()?;
-
-    let response = client
-        .post(format!("{}/api/v2/auth/login", cfg.url))
-        .form(&[("username", cfg.username), ("password", cfg.password)])
-        .send()
-        .await?;
-
-    if !response.status().is_success() {
-        bail!("login failed: {}", response.status());
-    }
+    let cfg = load_config()?;
+    let client = login(&cfg).await?;
 
     let body = client
         .get(format!("{}/api/v2/torrents/info", cfg.url))
@@ -139,6 +116,42 @@ async fn list() -> Result<()> {
         );
     }
     Ok(())
+}
+
+async fn login(cfg: &Config) -> Result<reqwest::Client> {
+    let client = reqwest::Client::builder().cookie_store(true).build()?;
+
+    let response = client
+        .post(format!("{}/api/v2/auth/login", cfg.url))
+        .form(&[
+            ("username", cfg.username.as_str()),
+            ("password", cfg.password.as_str()),
+        ])
+        .send()
+        .await?;
+
+    if !response.status().is_success() {
+        bail!("login failed: {}", response.status());
+    }
+    Ok(client)
+}
+
+fn load_config() -> Result<Config> {
+    let home = std::env::var("HOME").context("HOME is not set")?;
+    let path = format!("{}/.config/tick/config.toml", home);
+    let mode = std::fs::metadata(&path)
+        .with_context(|| format!("failed to read {path}"))?
+        .permissions()
+        .mode();
+
+    if !is_private(mode) {
+        bail!("{path} must not be readable by other users (run: chmod 600 {path})");
+    }
+    let text = std::fs::read_to_string(&path).with_context(|| format!("failed to read {path}"))?;
+
+    let cfg: Config = toml::from_str(&text).with_context(|| format!("failed to parse {path}"))?;
+
+    Ok(cfg)
 }
 
 #[cfg(test)]
