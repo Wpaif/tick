@@ -55,19 +55,12 @@ fn format_eta(eta: i64) -> String {
 
 fn format_state(state: &str) -> &str {
     match state {
-        "downloading" => "Downloading",
-        "forcedDL" => "Downloading",
-        "stoppedUP" => "Stopped",
-        "stoppedDL" => "Stopped",
-        "uploading" => "Seeding",
-        "forcedUP" => "Seeding",
-        "stalledDL" => "Stalled",
-        "stalledUP" => "Stalled",
-        "queuedDL" => "Queued",
-        "queuedUP" => "Queued",
-        "checkingDL" => "Checking",
-        "checkingUP" => "Checking",
-        "checkingResumeData" => "Checking",
+        "downloading" | "forcedDL" => "Downloading",
+        "stoppedUP" | "stoppedDL" => "Stopped",
+        "uploading" | "forcedUP" => "Seeding",
+        "stalledDL" | "stalledUP" => "Stalled",
+        "queuedDL" | "queuedUP" => "Queued",
+        "checkingDL" | "checkingUP" | "checkingResumeData" => "Checking",
         "metaDL" => "Fetching metadata",
         "missingFiles" => "Missing files",
         "error" => "Error",
@@ -214,7 +207,7 @@ mod tests {
     }
 
     #[test]
-    fn formats_downloading_state() {
+    fn formats_downloading_states() {
         assert_eq!(format_state("downloading"), "Downloading");
         assert_eq!(format_state("forcedDL"), "Downloading");
     }
@@ -244,7 +237,7 @@ mod tests {
     }
 
     #[test]
-    fn formats_cheking_states() {
+    fn formats_checking_states() {
         assert_eq!(format_state("checkingDL"), "Checking");
         assert_eq!(format_state("checkingUP"), "Checking");
         assert_eq!(format_state("checkingResumeData"), "Checking");
