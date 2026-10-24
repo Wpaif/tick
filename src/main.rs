@@ -23,6 +23,10 @@ fn is_private(mode: u32) -> bool {
     mode & 0o077 == 0
 }
 
+fn format_progress(progress: f64) -> String {
+    format!("{:.0}%", progress * 100.0)
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let home = std::env::var("HOME").context("HOME is not set")?;
@@ -66,7 +70,7 @@ async fn main() -> Result<()> {
             "{}\n  hash: {}\n  progress: {}\n  dlspeed: {}\n  eta: {}\n  state: {}\n",
             torrent.name,
             torrent.hash,
-            torrent.progress,
+            format_progress(torrent.progress),
             torrent.dlspeed,
             torrent.eta,
             torrent.state
@@ -109,5 +113,15 @@ mod tests {
         assert_eq!(torrents[0].name, "Arquivo 1");
         assert_eq!(torrents[0].progress, 1.0);
         assert_eq!(torrents[0].state, "stoppedUP");
+    }
+
+    #[test]
+    fn formats_progress_as_percent() {
+        assert_eq!(format_progress(0.42), "42%");
+    }
+
+    #[test]
+    fn rounds_progress_to_whole_percent() {
+        assert_eq!(format_progress(0.29), "29%");
     }
 }
