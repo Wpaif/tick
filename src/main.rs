@@ -5,7 +5,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use config::load_config;
 use format::{format_eta, format_progress, format_speed, format_state};
-use qbit::{Torrent, login};
+use qbit::{Torrent, login, stop};
 
 #[derive(Parser)]
 struct Cli {
@@ -17,6 +17,11 @@ struct Cli {
 enum Command {
     /// List all torrents
     List,
+    /// Pause a torrent
+    Pause {
+        /// Hash of the torrent to pause
+        hash: String,
+    },
 }
 
 #[tokio::main]
@@ -25,7 +30,16 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Command::List => list().await,
+        Command::Pause { hash } => pause(hash).await,
     }
+}
+
+async fn pause(hash: String) -> Result<()> {
+    let cfg = load_config()?;
+    let client = login(&cfg).await?;
+
+    stop(&client, &cfg.url, &hash).await?;
+    Ok(())
 }
 
 async fn list() -> Result<()> {
